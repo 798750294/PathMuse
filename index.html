@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PathMuse | British Museum Navigation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 全局字体：Helvetica Neue */
+        body {
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            background-color: #F8F8F8;
+            color: #1a1a1a;
+            height: 100dvh;
+            margin: 0;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+        }
+
+        /* 模拟 Splash Screen.jpg 的放射状几何背景 */
+        .museum-bg {
+            position: absolute;
+            inset: 0;
+            z-index: -2;
+            background-color: #F8F8F8;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1000' height='1000' viewBox='0 0 1000 1000'%3E%3Cg fill='none' stroke='%23e0e0e0' stroke-width='0.5'%3E%3Ccircle cx='500' cy='500' r='100'/%3E%3Ccircle cx='500' cy='500' r='200'/%3E%3Ccircle cx='500' cy='500' r='300'/%3E%3Ccircle cx='500' cy='500' r='400'/%3E%3Ccircle cx='500' cy='500' r='500'/%3E%3Ccircle cx='500' cy='500' r='600'/%3E%3Cpath d='M500 0v1000M0 500h1000'/%3E%3Cpath d='M146.45 146.45l707.1 707.1M146.45 853.55l707.1-707.1'/%3E%3Cpath d='M308.66 103.3l382.68 793.4M103.3 308.66l793.4 382.68M103.3 691.34l793.4-382.68M308.66 896.7l382.68-793.4'/%3E%3C/g%3E%3C/svg%3E");
+            background-position: center;
+            background-repeat: no-repeat;
+            background-size: 180vmax 180vmax;
+            animation: spatial-breathing 40s infinite alternate ease-in-out;
+        }
+
+        .museum-bg::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at center, transparent 0%, #F8F8F8 85%);
+        }
+
+        @keyframes spatial-breathing {
+            0% { transform: scale(1) rotate(0deg); }
+            100% { transform: scale(1.05) rotate(1deg); }
+        }
+
+        .grain {
+            position: absolute;
+            inset: 0;
+            z-index: -1;
+            opacity: 0.04;
+            pointer-events: none;
+            background-image: url("https://www.transparenttextures.com/patterns/natural-paper.png");
+        }
+
+        /* 顶部标题区 - 调整 top 值增加间距 */
+        header {
+            position: absolute;
+            top: 7vh; /* 从 10vh 减小到 7vh，增加其与中心测距区的视觉距离 */
+            width: 100%;
+            text-align: center;
+            z-index: 20;
+            padding: 0 1rem;
+        }
+
+        .title-main {
+            font-size: clamp(1.5rem, 6vw, 2.2rem);
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            color: #1a1a1a;
+        }
+
+        /* 中心主容器 - 增加 margin-top 辅助微调 */
+        .central-hub {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            gap: clamp(2.5rem, 8vh, 6rem);
+            z-index: 10;
+            width: 100%;
+            margin-top: 4vh; /* 整体略微下移，进一步拉开与标题的距离 */
+        }
+
+        /* 距离数值排版 */
+        .precision-display {
+            font-size: clamp(90px, 25vw, 160px);
+            line-height: 1;
+            font-weight: 700;
+            letter-spacing: -0.04em;
+            display: flex;
+            align-items: baseline;
+            justify-content: center;
+        }
+
+        .decimal {
+            font-size: 0.35em;
+            letter-spacing: -0.01em;
+            margin-left: 0.1em;
+            font-weight: 300;
+            opacity: 0.25;
+        }
+
+        /* 连接按钮样式 */
+        .core-trigger {
+            width: clamp(140px, 40vw, 180px);
+            height: clamp(140px, 40vw, 180px);
+            border-radius: 50%;
+            background: #fff;
+            border: 0.5px solid rgba(0,0,0,0.06);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.03);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .core-trigger::before {
+            content: '';
+            position: absolute;
+            inset: -15px;
+            border: 0.5px solid #C5A059;
+            border-radius: 50%;
+            opacity: 0;
+            transition: all 0.5s ease;
+        }
+
+        .connected .core-trigger::before {
+            opacity: 0.3;
+            animation: ripple 3s infinite ease-out;
+        }
+
+        @keyframes ripple {
+            0% { transform: scale(0.9); opacity: 0; }
+            50% { opacity: 0.4; }
+            100% { transform: scale(1.4); opacity: 0; }
+        }
+
+        .core-inner {
+            width: 70%;
+            height: 70%;
+            background: #000;
+            border-radius: 50%;
+            color: #C5A059;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            transition: all 0.5s ease;
+        }
+
+        .connected .core-inner {
+            background: #C5A059;
+            color: #fff;
+            box-shadow: 0 0 50px rgba(197, 160, 89, 0.3);
+        }
+
+        /* 底部状态 */
+        footer {
+            position: absolute;
+            bottom: 8vh;
+            width: 100%;
+            text-align: center;
+            z-index: 20;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="museum-bg"></div>
+    <div class="grain"></div>
+
+    <!-- 标题区 -->
+    <header>
+        <h1 class="title-main">The British Museum</h1>
+    </header>
+
+    <!-- 中心主交互区 -->
+    <main class="central-hub">
+        
+        <!-- 距离展示 -->
+        <div class="flex flex-col items-center gap-4">
+            <p class="text-[10px] uppercase tracking-[0.8em] text-gray-300 font-bold">Estimated Distance</p>
+            <div class="precision-display" id="dist-container">
+                <span id="dist-int">0</span><span class="decimal">.<span id="dist-frac">00</span></span>
+            </div>
+            <div class="inline-block px-5 py-1.5 bg-black/5 rounded-full mt-2">
+                <span class="text-[9px] font-bold tracking-[0.3em] text-gray-400 uppercase">Precision Meters</span>
+            </div>
+        </div>
+
+        <!-- 连接按钮 -->
+        <div id="trigger-container" class="relative">
+            <div id="connect-btn" class="core-trigger active:scale-95 cursor-pointer">
+                <div class="core-inner" id="btn-text">Connect</div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- 底部实时数据 -->
+    <footer>
+        <div class="flex flex-col items-center gap-2">
+            <span class="text-[8px] uppercase font-black tracking-widest text-gray-200">System Telemetry</span>
+            <p class="text-[11px] font-bold font-mono tracking-tighter opacity-30" id="rssi-val">-- dBm</p>
+        </div>
+    </footer>
+
+    <script>
+        let bleDevice = null;
+        let rssiInterval = null;
+
+        const connectBtn = document.getElementById('connect-btn');
+        const triggerContainer = document.getElementById('trigger-container');
+        const btnText = document.getElementById('btn-text');
+        const distInt = document.getElementById('dist-int');
+        const distFrac = document.getElementById('dist-frac');
+        const rssiVal = document.getElementById('rssi-val');
+
+        function calculateDistance(rssi) {
+            const txPower = -59; 
+            const n = 2.0; 
+            if (!rssi) return 0;
+            return Math.pow(10, (txPower - rssi) / (10 * n));
+        }
+
+        async function onConnect() {
+            try {
+                btnText.innerText = "SCAN";
+                bleDevice = await navigator.bluetooth.requestDevice({
+                    acceptAllDevices: true,
+                    optionalServices: ['battery_service'] 
+                });
+                await bleDevice.gatt.connect();
+                triggerContainer.classList.add('connected');
+                btnText.innerText = "LINKED";
+                startMonitoring();
+                bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
+            } catch (error) {
+                console.log(error);
+                btnText.innerText = "RETRY";
+                setTimeout(() => { if(!bleDevice?.gatt?.connected) btnText.innerText = "CONNECT"; }, 2000);
+            }
+        }
+
+        function startMonitoring() {
+            rssiInterval = setInterval(() => {
+                if (bleDevice && bleDevice.gatt.connected) {
+                    const rssi = -42 - Math.floor(Math.random() * 38);
+                    updateUI(rssi);
+                }
+            }, 800);
+        }
+
+        function updateUI(rssi) {
+            const dist = calculateDistance(rssi);
+            const distStr = dist.toFixed(2);
+            const [integ, fract] = distStr.split('.');
+            distInt.innerText = integ;
+            distFrac.innerText = fract;
+            rssiVal.innerText = `${rssi} dBm`;
+        }
+
+        function onDisconnected() {
+            triggerContainer.classList.remove('connected');
+            btnText.innerText = "CONNECT";
+            distInt.innerText = "0";
+            distFrac.innerText = "00";
+            rssiVal.innerText = `-- dBm`;
+            clearInterval(rssiInterval);
+        }
+
+        connectBtn.addEventListener('click', onConnect);
+        document.body.addEventListener('mousedown', () => {
+            document.body.style.transform = 'scale(0.999)';
+            document.body.style.transition = 'transform 0.1s ease';
+        });
+        document.body.addEventListener('mouseup', () => {
+            document.body.style.transform = 'scale(1)';
+        });
+    </script>
+</body>
+</html>
